@@ -1,0 +1,111 @@
+<!doctype html>
+<head>
+ 	<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+<h1>Image-Based Lighting</h1>
+<h3>HDR Images</h3>
+No matter at which stage, the pixel value at (128, 128) of the three log irradiance images are different. For the naive stage, they are [190, 189, 188], [205, 205, 203] and [221, 219, 216]; for the filtered stage, they are [205, 227, 224], [216, 216, 214], [228, 227, 224]; for the estimation stage, they are [104, 96, 88], [93, 98, 93] and [114, 110, 104]. The reason is the exposure time for the three images are different and since ln(Z) = ln(R) + ln(t), the pixel values are different. And for the estimated stage, even though g(Z) = ln(R) + ln(t) and that g(.) is a non-linear function, given that ln(R) + ln(t) is different from image to image, Z is highly likely to be different.
+
+<br><br>
+<table style="text-align:center; border-spacing: 15px 5px">
+	<tr>
+		<td> LDR Image (1/5) </td>
+		<td> LDR Image (1/40) </td>
+		<td> LDR Image (1/160)</td>
+		<td> Background Image</td>
+	</tr>
+	<tr>
+		<td><img src="samples/1_5_cut.png" height="192" width="192"></img></td>
+		<td><img src="samples/1_40_cut.png" height="192" width="192"></img></td>
+		<td><img src="samples/1_160_cut.png" height="192" width="192"></img></td>
+		<td><img src="samples/my_empty.jpg" height="144" width="192" style="transform:rotate(90deg);"></img></td>
+	</tr>
+	<tr>
+		<td colspan="3">Naive Log Irradiances</td>
+		<td>HDR Image</td>
+	</tr>
+    <tr>
+		<td><img src="images/outputs/naive_0.png" height="192" width="192"></img></td>
+		<td><img src="images/outputs/naive_1.png" height="192" width="192"></img></td>
+		<td><img src="images/outputs/naive_2.png" height="192" width="192"></img></td>
+		<td><img src="images/outputs/naive_hdr.png" height="192" width="192"></img></td>
+	</tr>
+	<tr>
+		<td colspan="3">Filtered Log Irradiances</td>
+		<td>HDR Image</td>
+	</tr>
+    <tr>
+		<td><img src="images/outputs/filtered_0.png" height="192" width="192"></img></td>
+		<td><img src="images/outputs/filtered_1.png" height="192" width="192"></img></td>
+		<td><img src="images/outputs/filtered_2.png" height="192" width="192"></img></td>
+		<td><img src="images/outputs/filtered_hdr.png" height="192" width="192"></img></td>
+	</tr>
+	<tr>
+		<td colspan="3">Estimated Log Irradiances</td>
+		<td>HDR Image</td>
+	</tr>
+    <tr>
+		<td><img src="images/outputs/estimation_0.png" height="192" width="192"></img></td>
+		<td><img src="images/outputs/estimation_1.png" height="192" width="192"></img></td>
+		<td><img src="images/outputs/estimation_2.png" height="192" width="192"></img></td>
+		<td><img src="images/outputs/estimation_hdr.png" height="192" width="192"></img></td>
+	</tr>
+</table>
+
+<h3>Estimated Function g</h3>
+<img src="images/outputs/estimated_functions.png">
+
+<h3>Equirectangular HDR Image</h3>
+We follow the post in Piazza, setting x-axis to right, y-axis up and z-axis away from the image. Firstly, we compute the normal by calculating the x and y component first using the pixel distance from the center of the image (which we assume to be the center of the ball) and z component with formula <i>z^2 = sqrt(1 - y^2 - x^2)</i>. With the normal, we could derive the reflection vector using the formula provided in the slides by implementing a function for dot product between two 3-d vectors. Then with the reflection vector, we compute phi and theta using <i>arctan(z/x) + pi</i> and <i>arccos(y)</i> respectively. Finally, with phi and theta, we follow the instructions to interpolate the equirectangular image using <i>griddata</i>.
+<br><br>
+<img src="images/outputs/equirectangular.png" height="270" width="540">
+
+<h3>Composite Result</h3>
+We show two sets fo compositing images. Both are with the same background but the second one is rendered with a new object -- sofa.
+
+<br><br>
+<table style="text-align:center; border-spacing: 15px 5px">
+	<tr>
+		<td> Background Image </td>
+		<td> Compositing Result </td>
+		<td> Render w/ Objects </td>
+		<td> Render w/o Objects </td>
+		<td> Object Mask </td>
+	</tr>
+	<tr>
+		<td><img src="samples/my_empty.jpg" height="192" width="256" style="transform:rotate(90deg);"></img></td>
+		<td><img src="images/outputs/merged.png" height="256" width="192"></img></td>
+		<td><img src="samples/r1.png" height="256" width="192"></img></td>
+		<td><img src="samples/r2.png" height="256" width="192"></img></td>
+		<td><img src="samples/mask.png" height="256" width="192"></img></td>
+	</tr>
+	<tr>
+		<td></td>
+		<td><img src="images/outputs/merged_2.png" height="256" width="192"></img></td>
+		<td><img src="samples/r4.png" height="256" width="192"></img></td>
+		<td><img src="samples/r3.png" height="256" width="192"></img></td>
+		<td><img src="samples/mask_2.png" height="256" width="192"></img></td>
+	</tr>
+</table>
+
+<h1>Bells and Whistles</h1>
+<h3>Other Panoramic transformation (Cubic)</h3>
+I implement the pseudo codes provided on the Wiki page and yet has to flip each image upside down.
+<br><br>
+<img src="images/outputs/cubic.png" height="384" width="512">
+
+<h3>Photographer removal</h3>
+I implement the first method, that is, using the image inpainting method we've described and implemented in proj. 2 to remove and fill in the masked area.
+<br><br>
+<table style="text-align:center; border-spacing: 15px 5px">
+	<tr>
+		<td> Original </td>
+		<td> Inpainted </td>
+	</tr>
+	<tr>
+		<td><img src="images/outputs/equirectangular.png" height="270" width="540"></td>
+		<td><img src="images/outputs/inpainted.png" height="270" width="540"></td>
+	</tr>
+</body>
